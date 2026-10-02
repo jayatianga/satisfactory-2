@@ -284,6 +284,7 @@ export class UI {
   // ================================================================ panels
   openPanel(kind, extra = {}) {
     this.panel = { kind, ...extra };
+    this.justOpened = true; // ignore the key that opened it for the rest of this frame
     this.panelEl.classList.remove('hidden');
     this.intentionalUnlock = true;
     if (this.game) {
@@ -934,6 +935,7 @@ export class UI {
     const input = g.input;
     if (this.chatOpen) return;
     const p = this.panel;
+    if (this.justOpened) { this.justOpened = false; return; }
     if (input.hit('Escape')) {
       if (p) { if (p.kind === 'settings' || p.kind === 'help') this.openPanel('pause'); else if (p.kind !== 'disconnected') this.closePanel(); }
       else if (g.build.mode) g.build.cancel();

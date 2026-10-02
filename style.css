@@ -206,7 +206,7 @@ input, select, textarea { font-family: var(--font); }
 input[type=range] { width: 100%; accent-color: var(--orange); }
 
 /* map */
-#mapwrap { position: relative; width: min(84vh, 90vw); height: min(84vh, 90vw); background: #000; overflow: hidden; cursor: grab; }
+#mapwrap { position: relative; width: min(72vh, 86vw); height: min(72vh, 86vw); background: #000; overflow: hidden; cursor: grab; }
 #mapwrap canvas { position: absolute; left: 0; top: 0; }
 .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; margin-top: 8px; }
 .legend span { display: inline-flex; align-items: center; gap: 4px; }
