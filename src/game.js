@@ -477,7 +477,7 @@ export class Game {
       if (this.isHost) this.stopHosting();
       else this.net.close();
     }
-    this.view.renderer.dispose();
+    this.view.dispose();
   }
 }
 

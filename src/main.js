@@ -1,6 +1,6 @@
 // App entry: main menu, settings, saves, starting/joining games and the frame loop.
 import { World } from './world/world.js';
-import { createState, deserializeState, playerSlotCount } from './sim/factory.js';
+import { createState, deserializeState } from './sim/factory.js';
 import { Game, PROTOCOL } from './game.js';
 import { UI } from './ui/ui.js';
 import { Input } from './player/input.js';
@@ -394,6 +394,7 @@ class App {
       this.ui.toast('Share the code (pause menu → Copy Invite Link) with your friend.', 'info', 8000);
       if (this.ui.panel && this.ui.panel.kind === 'pause') this.ui.render();
     } catch (e) {
+      try { g.net && g.net.close(); } catch (e2) { /* ignore */ }
       g.net = null;
       this.ui.notify('Could not start multiplayer: ' + e.message, 'err');
     }

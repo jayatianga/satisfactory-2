@@ -260,7 +260,7 @@ export class Factory {
   maxConns(e) {
     const def = BUILDINGS[e.type];
     if (def.pole) return def.pole;
-    if (def.conn) return def.lamp ? 2 : 2;
+    if (def.conn) return 3;
     return 0;
   }
 

@@ -62,7 +62,7 @@ export const BUILDINGS = {
   },
   smelter: {
     name: 'Smelter', cat: 'production', size: [6, 7, 9], cost: { iron_rod: 5, wire: 8 },
-    power: 4, machine: 'smelter', ports: [inBack(0, 9), outFront(0, 9)], conn: [2.4, 6, -3], ui: 'machine',
+    smoke: [[1.1, 7.9, -1.6]], power: 4, machine: 'smelter', ports: [inBack(0, 9), outFront(0, 9)], conn: [2.4, 6, -3], ui: 'machine',
     desc: 'Smelts ore into ingots.',
   },
   constructor: {
@@ -77,12 +77,12 @@ export const BUILDINGS = {
   },
   foundry: {
     name: 'Foundry', cat: 'production', size: [10, 9, 9], cost: { modular_frame: 10, rotor: 10, concrete: 20 },
-    power: 16, machine: 'foundry', ports: [inBack(-2, 9), inBack(2, 9), outFront(0, 9)], conn: [4.4, 8, -3.5], ui: 'machine',
+    smoke: [[0, 8.9, -3.4]], power: 16, machine: 'foundry', ports: [inBack(-2, 9), inBack(2, 9), outFront(0, 9)], conn: [4.4, 8, -3.5], ui: 'machine',
     desc: 'Smelts two resources into alloy ingots.',
   },
   manufacturer: {
     name: 'Manufacturer', cat: 'production', size: [18, 12, 20], cost: { motor: 10, modular_frame: 20, cable: 50, encased_industrial_beam: 20 },
-    power: 55, machine: 'manufacturer',
+    smoke: [[-5, 12.4, -4], [0, 12.4, -4], [5, 12.4, -4]], power: 55, machine: 'manufacturer',
     ports: [inBack(-6, 20), inBack(-2, 20), inBack(2, 20), inBack(6, 20), outFront(0, 20)], conn: [8, 11, -8], ui: 'machine',
     desc: 'Crafts three or four parts into a complex component.',
   },
@@ -90,12 +90,12 @@ export const BUILDINGS = {
   // ---------------- Power ----------------
   biomass_burner: {
     name: 'Biomass Burner', cat: 'power', size: [7, 8, 7], cost: { iron_plate: 15, iron_rod: 15, wire: 25 },
-    gen: 30, fuels: ['leaves', 'wood', 'mycelia', 'biomass', 'solid_biofuel'], ports: [inBack(0, 7)], conn: [2.6, 7.5, 2.6], ui: 'generator',
+    smoke: [[1.4, 8.6, -1.0]], gen: 30, fuels: ['leaves', 'wood', 'mycelia', 'biomass', 'solid_biofuel'], ports: [inBack(0, 7)], conn: [2.6, 7.5, 2.6], ui: 'generator',
     desc: 'Burns biomass to produce 30 MW. Can be fed by hand or by conveyor.',
   },
   coal_generator: {
     name: 'Coal Generator', cat: 'power', size: [10, 13, 20], cost: { reinforced_iron_plate: 20, rotor: 10, cable: 30 },
-    gen: 75, fuels: ['coal', 'compacted_coal'], ports: [inBack(0, 20)], conn: [4, 12, 6], ui: 'generator',
+    smoke: [[-2.5, 13.8, 5], [2.5, 13.8, 5]], steam: true, gen: 75, fuels: ['coal', 'compacted_coal'], ports: [inBack(0, 20)], conn: [4, 12, 6], ui: 'generator',
     desc: 'Burns coal to produce 75 MW.',
   },
   power_storage: {

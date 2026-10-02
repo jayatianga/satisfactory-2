@@ -2,7 +2,7 @@
 import { BUILDINGS } from '../data/buildings.js';
 import { ITEMS } from '../data/items.js';
 import { WORLD_HALF, WATER_LEVEL, NODE_TYPES } from '../world/world.js';
-import { clamp, escapeHtml } from '../core/util.js';
+import { clamp } from '../core/util.js';
 
 export class MapPanel {
   constructor(game) {

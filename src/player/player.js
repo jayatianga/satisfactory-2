@@ -110,10 +110,12 @@ export class Player {
         this.onGround = false;
       }
       this.jetting = false;
-      if (eq.includes('jetpack') && jump && !this.onGround && this.jetFuel > 0 && !input.hit('Space') && this.vel.y < 1.5) {
+      if (eq.includes('jetpack') && jump && !this.onGround && this.jetFuel > 0 && !input.hit('Space') && this.vel.y < 3) {
         this.jetting = true;
         this.vel.y = Math.min(this.vel.y + 34 * dt, 6);
         this.jetFuel = Math.max(0, this.jetFuel - dt * 0.33);
+        this.jetSfx = (this.jetSfx || 0) - dt;
+        if (this.jetSfx <= 0) { this.jetSfx = 0.12; if (g.audio) g.audio.play('jet'); }
       }
     }
     if (this.onGround) this.jetFuel = Math.min(1, this.jetFuel + dt * 0.6);
@@ -207,6 +209,9 @@ export class Player {
       } else this.onGround = false;
     }
     this.pos.y = ny;
+    // safety net: never end up below the terrain
+    const th = g.world.heightAt(nx, nz);
+    if (this.pos.y < th - 2) { this.pos.y = th + 0.1; this.vel.y = 0; }
 
     // footsteps
     const hs = Math.hypot(this.vel.x, this.vel.z);

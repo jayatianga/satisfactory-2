@@ -1,6 +1,6 @@
 // Scene setup and per-frame visual sync of the simulation.
 import * as THREE from 'three';
-import { BUILDINGS, MAX_POLE_HEIGHT } from '../data/buildings.js';
+import { BUILDINGS } from '../data/buildings.js';
 import { ITEMS, beltForm } from '../data/items.js';
 import { WORLD_HALF, CELL, GRID, WATER_LEVEL, NODE_TYPES, FLORA } from '../world/world.js';
 import { materials, instantiate, buildTemplate, pioneerModel, conveyorPoleModel } from './models.js';
@@ -38,6 +38,7 @@ export class View {
     this.buildFlora();
     this.setupItemMeshes();
     this.setupHolograms();
+    this.setupSmoke();
     this.flashlight = new THREE.SpotLight('#fff6e0', 0, 60, Math.PI / 7, 0.5, 1.2);
     this.flashlight.position.set(0.3, -0.2, 0);
     this.camera.add(this.flashlight);
@@ -45,7 +46,13 @@ export class View {
     this.flashlight.target.position.set(0, 0, -10);
     this.glowTex = makeGlowTexture();
     this.resize();
-    window.addEventListener('resize', () => this.resize());
+    this.onResize = () => this.resize();
+    window.addEventListener('resize', this.onResize);
+  }
+
+  dispose() {
+    window.removeEventListener('resize', this.onResize);
+    this.renderer.dispose();
   }
 
   resize() {
@@ -110,7 +117,7 @@ export class View {
           float h = d.y;
           vec3 col = h > 0.0 ? mix(horizon, top, pow(clamp(h,0.0,1.0), 0.55)) : mix(horizon, bottom, clamp(-h*4.0,0.0,1.0));
           float s = max(dot(d, normalize(sunDir)), 0.0);
-          col += sunColor * (pow(s, 900.0) * 6.0 + pow(s, 12.0) * 0.25);
+          col += sunColor * (smoothstep(0.99955, 0.9998, s) * 6.0 + pow(s, 220.0) * 0.6 + pow(s, 10.0) * 0.18);
           if (stars > 0.0 && h > 0.0) {
             vec3 q = floor(d * 400.0);
             float st = step(0.9985, hash(q));
@@ -631,7 +638,6 @@ export class View {
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), yAxis = new THREE.Vector3(0, 1, 0);
     const out = {};
     const R2 = 140 * 140;
-    const spin = this.time;
     for (const b of this.factory.belts) {
       if (!b.items.length || !b._curve) continue;
       const c = b._curve;
@@ -659,6 +665,85 @@ export class View {
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     }
+  }
+
+  // ---------------------------------------------------------------- chimney smoke
+  setupSmoke() {
+    const MAX = 700;
+    this.smokeMax = MAX;
+    const geo = new THREE.BufferGeometry();
+    this.smokePos = new Float32Array(MAX * 3);
+    this.smokeSize = new Float32Array(MAX);
+    this.smokeAlpha = new Float32Array(MAX);
+    this.smokeShade = new Float32Array(MAX);
+    geo.setAttribute('position', new THREE.BufferAttribute(this.smokePos, 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(this.smokeSize, 1).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aAlpha', new THREE.BufferAttribute(this.smokeAlpha, 1).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aShade', new THREE.BufferAttribute(this.smokeShade, 1).setUsage(THREE.DynamicDrawUsage));
+    this.smokeUniforms = { light: { value: 1 }, scale: { value: 600 } };
+    const mat = new THREE.ShaderMaterial({
+      uniforms: this.smokeUniforms,
+      transparent: true,
+      depthWrite: false,
+      vertexShader: `attribute float aSize; attribute float aAlpha; attribute float aShade; varying float vA; varying float vS; uniform float scale;
+        void main(){ vA = aAlpha; vS = aShade; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * scale / max(1.0, -mv.z); gl_Position = projectionMatrix * mv; }`,
+      fragmentShader: `varying float vA; varying float vS; uniform float light;
+        void main(){ float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.05, d) * vA; if (a < 0.01) discard; gl_FragColor = vec4(vec3(vS) * light, a); }`,
+    });
+    this.smoke = new THREE.Points(geo, mat);
+    this.smoke.frustumCulled = false;
+    this.smoke.renderOrder = 3;
+    this.scene.add(this.smoke);
+    this.particles = [];
+    this.smokeTimer = 0;
+  }
+
+  updateSmoke(dt, camPos) {
+    // spawn from active chimneys near the camera
+    const tmp = [0, 0, 0];
+    for (const e of this.factory.near(camPos.x, camPos.z, 120)) {
+      const def = BUILDINGS[e.type];
+      if (!def.smoke) continue;
+      const active = def.gen ? e._load > 0 && !e.tripped : e.working && e._powered;
+      if (!active) continue;
+      for (const [lx, ly, lz] of def.smoke) {
+        e._smokeAcc = (e._smokeAcc || 0) + dt * (def.steam ? 7 : 4);
+        while (e._smokeAcc >= 1 && this.particles.length < this.smokeMax) {
+          e._smokeAcc -= 1;
+          const c = Math.cos(e.r), sn = Math.sin(e.r);
+          tmp[0] = e.x + lx * c + lz * sn;
+          tmp[1] = e.y + ly;
+          tmp[2] = e.z - lx * sn + lz * c;
+          this.particles.push({
+            x: tmp[0] + (Math.random() - 0.5) * 0.4, y: tmp[1], z: tmp[2] + (Math.random() - 0.5) * 0.4,
+            vx: (Math.random() - 0.5) * 0.5 + 0.6, vy: 1.6 + Math.random() * 0.8, vz: (Math.random() - 0.5) * 0.5 + 0.3,
+            age: 0, life: 3 + Math.random() * 2, shade: def.steam ? 0.95 : 0.45 + Math.random() * 0.2, size: def.steam ? 2.2 : 1.4,
+          });
+        }
+      }
+    }
+    const P = this.particles;
+    let n = 0;
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i];
+      p.age += dt;
+      if (p.age >= p.life) continue;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+      p.vy *= 0.995;
+      const t = p.age / p.life;
+      this.smokePos[n * 3] = p.x; this.smokePos[n * 3 + 1] = p.y; this.smokePos[n * 3 + 2] = p.z;
+      this.smokeSize[n] = p.size * (1 + t * 3);
+      this.smokeAlpha[n] = Math.min(1, t * 6) * (1 - t) * 0.55;
+      this.smokeShade[n] = p.shade;
+      P[n] = p;
+      n++;
+    }
+    P.length = n;
+    const geo = this.smoke.geometry;
+    geo.setDrawRange(0, n);
+    for (const k of ['position', 'aSize', 'aAlpha', 'aShade']) geo.attributes[k].needsUpdate = true;
+    this.smokeUniforms.light.value = 0.35 + 0.65 * (this.dayFactor == null ? 1 : this.dayFactor);
+    this.smokeUniforms.scale.value = window.innerHeight * 0.9;
   }
 
   // ---------------------------------------------------------------- remote players
@@ -825,6 +910,7 @@ export class View {
     this.updateSky(simTime, camPos);
     this.updateItems(alpha, camPos);
     this.animateRemotes(dt);
+    this.updateSmoke(dt, camPos);
     for (const [tier, mat] of Object.entries(this.beltMats)) {
       const speed = BUILDINGS['belt_mk' + tier].speed;
       mat.map.offset.y -= speed * dt / 2;

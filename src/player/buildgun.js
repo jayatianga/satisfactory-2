@@ -233,7 +233,7 @@ export class BuildGun {
   }
 
   updateBelt(hit, input, def) {
-    const g = this.game, v = g.view, f = g.factory;
+    const g = this.game, v = g.view;
     v.hideHologram();
     v.showWirePreview(null);
     const pt = hit.point;
@@ -252,7 +252,7 @@ export class BuildGun {
       if (port) {
         v.showPortMarker(port.pos);
         this.info = 'Click to start conveyor at output';
-        if (input.mouse.clicked.has(0)) { this.start = { b: port.b, p: port.p, pos: port.pos }; g.audio.play('tick'); }
+        if (input.mouse.clicked.has(0)) { this.start = { b: port.b, p: port.p, pos: port.pos }; this.chainAt = null; g.audio.play('tick'); }
         return;
       }
       const gp = this.groundPoint(hit);
@@ -263,6 +263,7 @@ export class BuildGun {
       this.info = 'Click to start conveyor (places a Conveyor Pole)';
       if (input.mouse.clicked.has(0)) {
         this.start = { pole: { x, y: gp.y, z, h: poleH }, pos: { x, y: gp.y + poleH, z, dx: 0, dz: 1 } };
+        this.chainAt = null;
         g.audio.play('tick');
       }
       return;
@@ -374,6 +375,7 @@ export class BuildGun {
         } else {
           this.start = { pole: ep, pos };
         }
+        this.chainAt = null;
         g.audio.play('tick');
       }
       return;

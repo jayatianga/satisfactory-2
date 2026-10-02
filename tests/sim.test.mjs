@@ -239,7 +239,7 @@ test('fuse trips on overload and can be reset', () => {
   assert.ok(smelters.some(s => s._powered), 'powered again');
 });
 
-test('splitter distributes evenly and merger combines', () => {
+test('splitter distributes evenly', () => {
   const { state, world, host } = setup();
   unlockAll(state);
   give(state, 'alice', { iron_plate: 500, iron_rod: 300, cable: 50 });
@@ -271,6 +271,32 @@ test('splitter distributes evenly and merger combines', () => {
   const counts = outs.map(s => countItem(s.slots, 'iron_ore'));
   assert.equal(counts.reduce((a, b) => a + b, 0), 90, 'all delivered ' + counts);
   assert.ok(Math.max(...counts) - Math.min(...counts) <= 1, 'even split ' + counts);
+});
+
+test('merger combines two inputs fairly', () => {
+  const { state, world, host } = setup();
+  unlockAll(state);
+  give(state, 'alice', { iron_plate: 500, iron_rod: 300 });
+  const P = state.players.alice;
+  const f = host.factory;
+  const ox = -150, oz = -120;
+  P.x = ox; P.z = oz + 10;
+  const gy = (x, z, w = 2.5) => Math.max(...[[-w, -w], [w, -w], [-w, w], [w, w], [0, 0]].map(([dx, dz]) => world.heightAt(x + dx, z + dz)));
+  const place = (type, x, z) => { host.act('alice', { k: 'build', type, x, y: gy(x, z), z, r: 0 }); const e = [...f.ents.values()].pop(); assert.equal(e.type, type, host.lastErr()); return e; };
+  const a = place('storage_container', ox - 10, oz);
+  const b = place('storage_container', ox + 10, oz);
+  addItem(a.slots, 'iron_ore', 40);
+  addItem(b.slots, 'copper_ore', 40);
+  const m = place('merger', ox, oz + 12);
+  const out = place('storage_container', ox, oz + 24);
+  host.act('alice', { k: 'belt', type: 'belt_mk1', a: { b: a.id, p: 1 }, b: { b: m.id, p: 1 } });
+  host.act('alice', { k: 'belt', type: 'belt_mk1', a: { b: b.id, p: 1 }, b: { b: m.id, p: 2 } });
+  host.act('alice', { k: 'belt', type: 'belt_mk1', a: { b: m.id, p: 3 }, b: { b: out.id, p: 0 } });
+  assert.equal(f.belts.length, 3, host.lastErr());
+  run(host, 40);
+  const iron = countItem(out.slots, 'iron_ore'), copper = countItem(out.slots, 'copper_ore');
+  assert.ok(iron > 5 && copper > 5, `both inputs flow: iron ${iron}, copper ${copper}`);
+  assert.ok(Math.abs(iron - copper) <= 3, `fair merge: iron ${iron}, copper ${copper}`);
 });
 
 test('belt poles: belt from a machine to a new pole and onwards', () => {
@@ -353,7 +379,7 @@ test('network chunking reassembles large messages', () => {
 });
 
 test('AWESOME sink awards coupons and the shop spends them', () => {
-  const { state, world, host } = setup();
+  const { state, host } = setup();
   unlockAll(state);
   host.factory.sinkPoints(5000);
   assert.ok(state.prog.sink.coupons >= 3, 'coupons ' + state.prog.sink.coupons);

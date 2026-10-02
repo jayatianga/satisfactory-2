@@ -2,12 +2,12 @@
 // need to know about goes out through the game's event helpers.
 import { BUILDINGS, MAX_POLE_HEIGHT, lengthCost } from '../data/buildings.js';
 import { RECIPES } from '../data/recipes.js';
-import { ITEMS, stackOf } from '../data/items.js';
-import { MILESTONES, MILESTONE_BY_ID, RESEARCH_BY_ID, ELEVATOR_PHASES, TIER_REQ, SHOP } from '../data/progression.js';
+import { stackOf } from '../data/items.js';
+import { MILESTONE_BY_ID, RESEARCH_BY_ID, ELEVATOR_PHASES, TIER_REQ, SHOP } from '../data/progression.js';
 import { newEntity, setRecipe, computeCurve, playerSlotCount } from './factory.js';
 import { checkPlacement } from './placement.js';
-import { removeAll, hasAll, addItem, countItem, removeItem, canAddAll, sumCosts, isEmpty, resizeSlots } from './inventory.js';
-import { clamp, rotXZ, toWorld } from '../core/util.js';
+import { removeAll, hasAll, addItem, removeItem, canAddAll, sumCosts, resizeSlots } from './inventory.js';
+import { clamp } from '../core/util.js';
 import { floraHarvest } from '../world/world.js';
 
 const REACH = 14;
@@ -296,7 +296,6 @@ const HANDLERS = {
     const item = s.item;
     const want = Math.floor(Number(a.n));
     let n = a.n == null || !(want > 0) ? s.n : Math.min(want, s.n);
-    const stack = stackOf(item);
     let moved = 0;
     if (a.di == null || a.di < 0) {
       for (let k = 0; k < dst.slots.length && moved < n; k++) {
