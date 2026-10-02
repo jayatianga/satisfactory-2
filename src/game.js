@@ -279,6 +279,7 @@ export class Game {
         break;
       case 'act':
         handleAction(this, pid, msg.a || {});
+        this.flush(); // reply right away instead of waiting for the next frame
         break;
       case 'bye':
         this.onPeerLeave(peer);

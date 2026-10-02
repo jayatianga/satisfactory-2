@@ -13,11 +13,13 @@ to the Space Elevator. You can play solo or with a friend on a different network
 
 ### Option A: GitHub Pages (easiest for you and a friend)
 
-1. Merge this branch into `main`.
+1. Make sure the code is on your default branch (merge this branch if your default branch is
+   something else).
 2. In the repository on GitHub, go to **Settings → Pages** and set **Source** to **GitHub Actions**
    (you only do this once).
-3. The `Deploy to GitHub Pages` workflow publishes the game to
-   `https://<your-user>.github.io/satisfactory-2/`.
+3. Re-run the `Deploy to GitHub Pages` workflow (**Actions** tab → *Run workflow*), or just push.
+   It publishes the game to `https://<your-user>.github.io/satisfactory-2/`. Until Pages is
+   enabled, the deploy step is skipped with a notice rather than failing.
 4. You and your friend open that URL. Nothing to install.
 
 ### Option B: Run it yourself
@@ -54,7 +56,12 @@ use the relay instead:
    when joining.
 
 You can also paste your own TURN servers (JSON) under **Settings → Extra ICE/TURN servers** to
-make peer-to-peer work on difficult networks.
+make peer-to-peer work on difficult networks. If the public PeerJS server is ever down, run your
+own (`npx peerjs --port 9000`) and enter its address under
+**Settings → Custom PeerJS signalling server**. Both players need the same value.
+
+The host's world keeps running while their tab is in the background, so alt-tabbing won't freeze
+the game for the friend.
 
 ## Controls
 
