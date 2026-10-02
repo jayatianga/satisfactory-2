@@ -1,0 +1,18 @@
+{
+  "name": "satisfactory-2",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A browser-based, multiplayer factory-building game inspired by Satisfactory.",
+  "scripts": {
+    "start": "node server/relay.js",
+    "test": "node tests/sim.test.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
